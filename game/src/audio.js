@@ -1,32 +1,68 @@
-// Synthesized WebAudio sound only — no audio files, no network.
-// Created on the first user gesture; every call is safe before that.
-export function createAudio() {
-  let ctx = null;
-  function ensure() {
-    if (ctx) return ctx;
-    try { ctx = new (window.AudioContext || window.webkitAudioContext)(); } catch { ctx = null; }
-    return ctx;
+// Solara Bay — sound, made only from the Web Audio API.
+// No audio files, no network: every effect is an oscillator or a noise
+// buffer shaped by a gain envelope. The game calls these; nothing here
+// touches the canvas or the world.
+
+let ctx = null;
+let muted = false;
+
+function audioCtx() {
+  if (!ctx) {
+    const AC = window.AudioContext || window.webkitAudioContext;
+    if (!AC) return null;
+    ctx = new AC();
   }
-  function tone(freq, dur, type, vol, slide) {
-    const c = ensure(); if (!c) return;
-    try {
-      const o = c.createOscillator(), g = c.createGain();
-      o.type = type || 'square'; o.frequency.setValueAtTime(freq, c.currentTime);
-      if (slide) o.frequency.exponentialRampToValueAtTime(Math.max(20, slide), c.currentTime + dur);
-      g.gain.setValueAtTime(vol || 0.08, c.currentTime);
-      g.gain.exponentialRampToValueAtTime(0.001, c.currentTime + dur);
-      o.connect(g); g.connect(c.destination); o.start(); o.stop(c.currentTime + dur);
-    } catch { /* audio is decoration */ }
-  }
-  return {
-    unlock() { ensure(); if (ctx && ctx.state === 'suspended') ctx.resume().catch(() => {}); },
-    shoot() { tone(900, 0.12, 'square', 0.07, 120); },
-    coin() { tone(880, 0.12, 'sine', 0.08, 1320); },
-    hit() { tone(160, 0.25, 'sawtooth', 0.1, 60); },
-    siren() { tone(700, 0.4, 'sine', 0.05, 1100); },
-    horn() { tone(370, 0.18, 'square', 0.05, 370); tone(440, 0.18, 'square', 0.04, 440); },
-    ui() { tone(660, 0.06, 'sine', 0.05); },
-    mission() { tone(523, 0.15, 'sine', 0.09); setTimeout(() => tone(659, 0.15, 'sine', 0.09), 140); setTimeout(() => tone(784, 0.3, 'sine', 0.09), 280); },
-    steal() { tone(300, 0.2, 'square', 0.06, 600); },
-  };
+  if (ctx.state === 'suspended') ctx.resume().catch(() => {});
+  return ctx;
 }
+
+function tone(freq, dur, type, vol, slideTo) {
+  const ac = audioCtx();
+  if (!ac || muted) return;
+  const osc = ac.createOscillator();
+  const gain = ac.createGain();
+  osc.type = type || 'square';
+  osc.frequency.setValueAtTime(freq, ac.currentTime);
+  if (slideTo) osc.frequency.exponentialRampToValueAtTime(slideTo, ac.currentTime + dur);
+  gain.gain.setValueAtTime(vol || 0.12, ac.currentTime);
+  gain.gain.exponentialRampToValueAtTime(0.001, ac.currentTime + dur);
+  osc.connect(gain).connect(ac.destination);
+  osc.start();
+  osc.stop(ac.currentTime + dur);
+}
+
+function noise(dur, vol, filterFreq) {
+  const ac = audioCtx();
+  if (!ac || muted) return;
+  const len = Math.floor(ac.sampleRate * dur);
+  const buf = ac.createBuffer(1, len, ac.sampleRate);
+  const data = buf.getChannelData(0);
+  for (let i = 0; i < len; i += 1) data[i] = (Math.random() * 2 - 1) * (1 - i / len);
+  const src = ac.createBufferSource();
+  src.buffer = buf;
+  const filter = ac.createBiquadFilter();
+  filter.type = 'lowpass';
+  filter.frequency.value = filterFreq || 1200;
+  const gain = ac.createGain();
+  gain.gain.value = vol || 0.15;
+  src.connect(filter).connect(gain).connect(ac.destination);
+  src.start();
+}
+
+export const sounds = {
+  unlock() { audioCtx(); },
+  shoot() { noise(0.09, 0.2, 2600); tone(180, 0.08, 'square', 0.08, 60); },
+  hit() { noise(0.15, 0.2, 700); tone(90, 0.15, 'sawtooth', 0.12, 45); },
+  pickup() { tone(660, 0.09, 'sine', 0.14, 990); },
+  horn() { tone(370, 0.18, 'sawtooth', 0.1, 370); tone(466, 0.18, 'sawtooth', 0.08, 466); },
+  ui() { tone(520, 0.07, 'sine', 0.1, 780); },
+  siren() { tone(700, 0.35, 'sine', 0.06, 950); },
+  mission() {
+    tone(523, 0.12, 'sine', 0.14);
+    setTimeout(() => tone(659, 0.12, 'sine', 0.14), 110);
+    setTimeout(() => tone(784, 0.22, 'sine', 0.14), 220);
+  },
+};
+
+export function setMuted(value) { muted = !!value; }
+export function isMuted() { return muted; }

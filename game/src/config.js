@@ -1,28 +1,92 @@
-// Solara Bay — an original open-world crime game. All tuning in one place.
-// Viewport is a fixed 1280x720 logical area; the world is 3200x2400 and the
-// camera follows the player, so no rule depends on the screen size.
-export const FIELD = { width: 1280, height: 720 };
-export const WORLD = { width: 3200, height: 2400 };
-export const STEP = 1 / 60;
-export const PLAYER = { radius: 14, walkSpeed: 240, runSpeed: 340, health: 100 };
-export const CAR = { length: 54, width: 26, accel: 420, maxSpeed: 540, reverseSpeed: 180, turn: 2.6, health: 100 };
-export const CASH_PICKUP = 25;
-export const WANTED_DECAY_SECONDS = 20;
-export const LIVES = 3;
-export const PALETTE = {
-  backdrop: '#0d1117', grass: '#2e5d3a', park: '#3a7a4a', road: '#2b2f36', roadLine: '#d8c95a',
-  sidewalk: '#5a6068', building: '#7a6a8a', building2: '#8a7a5a', building3: '#5a7a8a', building4: '#9a5a6a',
-  water: '#2a6a9a', sand: '#c9b078', player: '#4fc3f7', playerCar: '#e5534b', traffic: '#f2c94c',
-  traffic2: '#7ad06a', traffic3: '#c98ad6', police: '#3a6ad8', policeLight: '#ff3b30', ped: '#e8e0d0',
-  text: '#eef1f5', muted: '#aab2bd', panel: '#1c222c', gold: '#f2c94c', red: '#e5534b', green: '#5ad06a',
-  minimapBg: 'rgba(10,14,20,0.82)',
+// Solara Bay — shared tuning for the whole game.
+// A sun-soaked coastal city, top-down, Canvas 2D. All numbers here are the
+// single place the rest of the game reads them from, so a balance change is
+// one edit instead of a hunt through five files.
+
+export const WORLD = {
+  width: 3200,
+  height: 2400,
+  beach: 220, // the strip of sand along the south edge, before the water
 };
-export const FONT = 'system-ui, -apple-system, "Segoe UI", sans-serif';
-export const BEST_KEY = 'solara-bay.save.v1';
+
+export const VIEW = { width: 1280, height: 720 };
+
+export const PLAYER = {
+  walkSpeed: 250,
+  runSpeed: 350,
+  radius: 14,
+  health: 100,
+};
+
+export const CAR = {
+  accel: 430,
+  maxSpeed: 560,
+  reverseSpeed: 190,
+  turn: 2.5,
+  health: 100,
+};
+
+export const POLICE = {
+  chaseSpeed: 390,
+  ramDamage: 12,
+  shotDamage: 8,
+  shootRange: 330,
+};
+
+export const GAME = {
+  lives: 3,
+  cashPickup: 25,
+  healthPickup: 40,
+  wantedDecaySeconds: 20,
+  policeKillReward: 50,
+  bankGrab: 500,
+};
+
 export const MISSIONS = [
-  { id: 1, title: 'Meet Mara', brief: 'Drive to the yellow marker at the Marina and meet Mara Solis.', kind: 'goto', reward: 150 },
-  { id: 2, title: 'Courier Run', brief: 'Pick up the package at the market, then deliver it to the hotel in the north.', kind: 'pickup-deliver', reward: 250 },
-  { id: 3, title: 'Borrowed Wheels', brief: 'Steal any parked car (press E near one) and bring it to the garage.', kind: 'steal', reward: 300 },
-  { id: 4, title: 'Hot Pursuit', brief: 'The police are on you. Lose the wanted level, then reach the safehouse.', kind: 'escape', reward: 400 },
-  { id: 5, title: 'The Last Getaway', brief: 'Grab the cash at the bank plaza, then escape to the docks with 3 wanted stars or less.', kind: 'heist', reward: 800 },
+  {
+    id: 'meet-mara',
+    title: 'Meet Mara',
+    kind: 'goto',
+    brief: 'Mara is waiting at the Marina. Drive or walk there to start.',
+    reward: 100,
+  },
+  {
+    id: 'courier-run',
+    title: 'Courier Run',
+    kind: 'pickup-deliver',
+    brief: 'Pick up the package at the Market, then deliver it to the Hotel.',
+    reward: 200,
+  },
+  {
+    id: 'borrowed-wheels',
+    title: 'Borrowed Wheels',
+    kind: 'steal',
+    brief: 'Steal a parked car and bring it to the Garage. The owner will notice.',
+    reward: 300,
+  },
+  {
+    id: 'hot-pursuit',
+    title: 'Hot Pursuit',
+    kind: 'escape',
+    brief: 'The police are on you. Lose the heat, then reach the Safehouse.',
+    reward: 400,
+  },
+  {
+    id: 'last-getaway',
+    title: 'The Last Getaway',
+    kind: 'heist',
+    brief: 'Grab the cash at Bank Plaza and get to the Docks. Do not get caught.',
+    reward: 600,
+  },
 ];
+
+// Where the missions point. Kept in config so the world and the HUD agree.
+export const PLACES = {
+  marina: { x: 2800, y: 1900, label: 'Marina' },
+  market: { x: 1000, y: 900, label: 'Market' },
+  hotel: { x: 1600, y: 400, label: 'Hotel' },
+  garage: { x: 400, y: 1400, label: 'Garage' },
+  safehouse: { x: 400, y: 400, label: 'Safehouse' },
+  bank: { x: 1600, y: 1400, label: 'Bank Plaza' },
+  docks: { x: 2800, y: 2150, label: 'Docks' },
+};

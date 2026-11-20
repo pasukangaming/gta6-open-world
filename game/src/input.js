@@ -1,66 +1,79 @@
-// Keyboard + mouse input for Solara Bay. Held keys give a movement vector;
-// one-shot presses (confirm, pause, enter/exit car) are queued as flags and
-// taken once by the loop. Mouse position gives the aim angle on foot, and a
-// click shoots.
-export const ACTION_CONFIRM = 1;
-export const ACTION_PAUSE = 2;
-export const ACTION_ENTER = 4;
-
-const UP = new Set(['ArrowUp', 'KeyW']);
-const DOWN = new Set(['ArrowDown', 'KeyS']);
-const LEFT = new Set(['ArrowLeft', 'KeyA']);
-const RIGHT = new Set(['ArrowRight', 'KeyD']);
-const CONFIRM = new Set(['Space', 'Enter']);
-const PAUSE = new Set(['KeyP', 'Escape']);
-const ENTER = new Set(['KeyE', 'KeyF']);
-const RUN = new Set(['ShiftLeft', 'ShiftRight']);
+// Solara Bay — keyboard and mouse input.
+// One object owns the keys, the pointer and the per-frame control vector
+// the world steps with. The world never reads the DOM itself.
 
 export function createInput(canvas) {
-  let up = false, down = false, left = false, right = false, run = false;
-  let actions = 0, shoot = false, mouseX = 0, mouseY = 0, mouseIn = false;
-  window.addEventListener('keydown', (event) => {
-    if (UP.has(event.code)) up = true;
-    else if (DOWN.has(event.code)) down = true;
-    else if (LEFT.has(event.code)) left = true;
-    else if (RIGHT.has(event.code)) right = true;
-    else if (RUN.has(event.code)) run = true;
-    else if (CONFIRM.has(event.code)) { if (!event.repeat) actions |= ACTION_CONFIRM; }
-    else if (PAUSE.has(event.code)) { if (!event.repeat) actions |= ACTION_PAUSE; }
-    else if (ENTER.has(event.code)) { if (!event.repeat) actions |= ACTION_ENTER; }
-    else return;
-    event.preventDefault();
-  });
-  window.addEventListener('keyup', (event) => {
-    if (UP.has(event.code)) up = false;
-    else if (DOWN.has(event.code)) down = false;
-    else if (LEFT.has(event.code)) left = false;
-    else if (RIGHT.has(event.code)) right = false;
-    else if (RUN.has(event.code)) run = false;
-  });
-  window.addEventListener('blur', () => { up = down = left = right = run = shoot = false; });
-  // Leaving the canvas mid-click must not leave the trigger held down.
-  canvas.addEventListener('pointerleave', () => { shoot = false; mouseIn = false; });
-  canvas.addEventListener('pointermove', (e) => { mouseX = e.clientX; mouseY = e.clientY; mouseIn = true; });
-  canvas.addEventListener('pointerdown', (e) => {
-    mouseX = e.clientX; mouseY = e.clientY; mouseIn = true;
-    if (e.button === 0) shoot = true; else actions |= ACTION_CONFIRM;
-  });
-  canvas.addEventListener('pointerup', () => { shoot = false; });
+  const keys = new Set();
+  const pointer = { x: 0, y: 0, down: false };
+
+  function onKeyDown(e) {
+    if (['ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight', ' '].includes(e.key)) e.preventDefault();
+    keys.add(e.key.toLowerCase());
+  }
+  function onKeyUp(e) { keys.delete(e.key.toLowerCase()); }
+  function onMouseMove(e) {
+    const rect = canvas.getBoundingClientRect();
+    pointer.x = e.clientX - rect.left;
+    pointer.y = e.clientY - rect.top;
+  }
+  function onMouseDown(e) { onMouseMove(e); pointer.down = true; }
+  function onMouseUp() { pointer.down = false; }
+  function onPointerLeave() { pointer.down = false; }
+  function onBlur() { keys.clear(); pointer.down = false; }
+
+  window.addEventListener('keydown', onKeyDown);
+  window.addEventListener('keyup', onKeyUp);
+  window.addEventListener('blur', onBlur);
+  canvas.addEventListener('mousemove', onMouseMove);
+  canvas.addEventListener('mousedown', onMouseDown);
+  window.addEventListener('mouseup', onMouseUp);
+  canvas.addEventListener('pointerleave', onPointerLeave);
+
+  // Edge-triggered presses (E to steal, P to pause, M to mute): the world
+  // sees them once, on the frame they happen, then they clear.
+  const pressed = new Set();
+  function pressOnce(code) {
+    if (pressed.has(code)) return false;
+    pressed.add(code);
+    return true;
+  }
+
   return {
-    // Control vector for world.step: x/y in -1..1, aim in world radians (or null), shoot, enter, run.
-    control(camera, player) {
-      const x = (right ? 1 : 0) - (left ? 1 : 0);
-      const y = (down ? 1 : 0) - (up ? 1 : 0);
-      let aim = null;
-      if (mouseIn && player && !player.inCar) {
-        const rect = canvas.getBoundingClientRect();
-        const sx = (mouseX - rect.left) * (1280 / rect.width);
-        const sy = (mouseY - rect.top) * (720 / rect.height);
-        aim = Math.atan2(camera.y + sy - player.y, camera.x + sx - player.x);
-      }
-      const enter = !!(actions & ACTION_ENTER);
-      return { x, y, aim, shoot, enter, run };
+    pointer,
+    // A fresh control vector every frame. x/y are -1..1, aim is a world
+    // angle in radians, enter/shoot are booleans for this frame only.
+    read(camX, camY) {
+      const up = keys.has('w') || keys.has('arrowup');
+      const down = keys.has('s') || keys.has('arrowdown');
+      const left = keys.has('a') || keys.has('arrowleft');
+      const right = keys.has('d') || keys.has('arrowright');
+      const ctrl = {
+        x: (right ? 1 : 0) - (left ? 1 : 0),
+        y: (down ? 1 : 0) - (up ? 1 : 0),
+        run: keys.has('shift'),
+        enter: keys.has('e') && pressOnce('e'),
+        shoot: pointer.down,
+        aim: Math.atan2(pointer.y + camY - 0, pointer.x + camX - 0),
+        pause: keys.has('p') && pressOnce('p'),
+        mute: keys.has('m') && pressOnce('m'),
+      };
+      // The aim angle needs the player's position, which the caller fills
+      // in: read() gets the camera, main.js rewrites aim from the player.
+      ctrl.aimX = pointer.x + camX;
+      ctrl.aimY = pointer.y + camY;
+      if (!keys.has('e')) pressed.delete('e');
+      if (!keys.has('p')) pressed.delete('p');
+      if (!keys.has('m')) pressed.delete('m');
+      return ctrl;
     },
-    takeActions() { const t = actions; actions = 0; return t; },
+    destroy() {
+      window.removeEventListener('keydown', onKeyDown);
+      window.removeEventListener('keyup', onKeyUp);
+      window.removeEventListener('blur', onBlur);
+      canvas.removeEventListener('mousemove', onMouseMove);
+      canvas.removeEventListener('mousedown', onMouseDown);
+      window.removeEventListener('mouseup', onMouseUp);
+      canvas.removeEventListener('pointerleave', onPointerLeave);
+    },
   };
 }
