@@ -6,6 +6,26 @@
 
 Solara Bay is an original top-down open-world crime game: explore a coastal city on foot and by car, steal cars, outrun the police, and finish five story missions.
 
+## Features
+
+- A 3200×2400 coastal city with roads, buildings, a park, a plaza, and a beach
+- Driving and on-foot play, with traffic, pedestrians, and police who chase, ram, and shoot
+- A wanted system (0–5 stars) that rises with theft, shootings, and hit-and-runs, and fades when you lay low
+- Five story missions: Meet Mara, Courier Run, Borrowed Wheels, Hot Pursuit, and The Last Getaway
+- Combat with mouse aim, a HUD with a minimap, cash pickups, health, and lives
+- Synthesised WebAudio sound only — no audio files, no network requests
+
+## Controls
+
+| Key | Action |
+| --- | --- |
+| WASD / arrows | Move on foot (Shift to run) |
+| W/S, A/D | Drive, steer |
+| E | Steal / enter / exit a car |
+| Mouse + click | Aim and shoot on foot |
+| Space / click | Start, continue |
+| P | Pause |
+
 ## Run it
 
 ```sh

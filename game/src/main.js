@@ -47,10 +47,12 @@ function runGame() {
   function announce(m) { status.textContent = m; }
   function startGame() {
     world.reset(); accumulator = 0; winShown = false; screen = SCREEN_PLAY;
-    audio.unlock(); announce('Playing Solara Bay. Mission 1: Meet Mara.');
+    audio.unlock(); audio.ui(); document.title = 'Solara Bay — Playing';
+    announce('Playing Solara Bay. Mission 1: Meet Mara.');
   }
   function endGame() {
     screen = SCREEN_OVER;
+    document.title = world.state.won ? 'Solara Bay — You Own the City' : 'Solara Bay — Busted';
     save.best = Math.max(save.best, world.state.cash); save.cash = world.state.cash; save.missions = world.state.missionIndex;
     writeSave(save);
     announce(world.state.won ? `You own Solara Bay. Cash $${world.state.cash}.` : `Busted. Cash $${world.state.cash}.`);

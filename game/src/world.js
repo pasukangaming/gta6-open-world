@@ -1,7 +1,7 @@
 // Solara Bay world: no drawing, no browser. A 3200x2400 original city with
 // roads, buildings, traffic, pedestrians, police, pickups, bullets and a
 // five-mission story. step() advances one fixed step and returns event flags.
-import { CAR, FIELD, LIVES, MISSIONS, PLAYER, WORLD } from './config.js';
+import { CAR, CASH_PICKUP, FIELD, LIVES, MISSIONS, PLAYER, WANTED_DECAY_SECONDS, WORLD } from './config.js';
 
 export const EVENT_HIT = 1;
 export const EVENT_COIN = 2;
@@ -160,9 +160,9 @@ export function createWorld(random) {
     if (state.messageTimer > 0) state.messageTimer -= dt;
     if (player.invulnerable > 0) player.invulnerable -= dt;
     if (player.shootCooldown > 0) player.shootCooldown -= dt;
-    // Wanted decays after 20s without crime.
+    // Wanted decays after WANTED_DECAY_SECONDS without crime.
     state.crimeTimer += dt;
-    if (state.wanted > 0 && state.crimeTimer > 20) { state.wanted -= 1; state.crimeTimer = 0; events |= EVENT_WANTED; }
+    if (state.wanted > 0 && state.crimeTimer > WANTED_DECAY_SECONDS) { state.wanted -= 1; state.crimeTimer = 0; events |= EVENT_WANTED; }
     // --- Player movement ---
     const run = ctrl.run ? PLAYER.runSpeed : PLAYER.walkSpeed;
     if (player.inCar && player.car) {
@@ -180,7 +180,11 @@ export function createWorld(random) {
       player.x = car.x; player.y = car.y; player.angle = car.angle;
       // Hitting pedestrians in a car is a crime, and it hurts.
       for (const p of peds) {
-        if (dist(car.x, car.y, p.x, p.y) < 34 && Math.abs(car.speed) > 120) { p.flee = 3; events |= addWanted(1); }
+        if (dist(car.x, car.y, p.x, p.y) < 34 && Math.abs(car.speed) > 120) {
+          p.flee = 3; events |= addWanted(1);
+          state.message = 'Watch it! You hit a pedestrian — the police are coming.';
+          state.messageTimer = 3;
+        }
       }
     } else {
       const mx = ctrl.x, my = ctrl.y;
@@ -281,7 +285,7 @@ export function createWorld(random) {
       if (!p.active) { p.timer -= dt; if (p.timer <= 0) p.active = true; continue; }
       if (dist(player.x, player.y, p.x, p.y) < 34) {
         p.active = false; p.timer = 20;
-        if (p.kind === 'cash') { state.cash += 25; state.score = state.cash; }
+        if (p.kind === 'cash') { state.cash += CASH_PICKUP; state.score = state.cash; }
         else player.health = Math.min(PLAYER.health, player.health + 40);
         events |= EVENT_COIN;
       }

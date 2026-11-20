@@ -68,6 +68,8 @@ export function stageShot(name, world) {
   teleport(state, 700, 900);
   if (state.player.car) state.player.car.angle = 0;
   state.player.invulnerable = 999;
+  // Make the chase immediate: police spawn on the first step, not after a delay.
+  state.policeTimer = 0; state.crimeTimer = 0; state.wanted = Math.max(state.wanted, 2);
   for (let i = 0; i < 9 / STEP; i += 1) {
     const wantAngle = state.player.x < 2100 ? 0 : Math.PI / 2;
     let da = wantAngle - state.player.angle; while (da > Math.PI) da -= Math.PI * 2; while (da < -Math.PI) da += Math.PI * 2;

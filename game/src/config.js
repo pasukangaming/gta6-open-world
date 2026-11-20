@@ -4,8 +4,10 @@
 export const FIELD = { width: 1280, height: 720 };
 export const WORLD = { width: 3200, height: 2400 };
 export const STEP = 1 / 60;
-export const PLAYER = { radius: 14, walkSpeed: 230, runSpeed: 320, health: 100 };
-export const CAR = { length: 54, width: 26, accel: 420, maxSpeed: 520, reverseSpeed: 180, turn: 2.6, health: 100 };
+export const PLAYER = { radius: 14, walkSpeed: 240, runSpeed: 340, health: 100 };
+export const CAR = { length: 54, width: 26, accel: 420, maxSpeed: 540, reverseSpeed: 180, turn: 2.6, health: 100 };
+export const CASH_PICKUP = 25;
+export const WANTED_DECAY_SECONDS = 20;
 export const LIVES = 3;
 export const PALETTE = {
   backdrop: '#0d1117', grass: '#2e5d3a', park: '#3a7a4a', road: '#2b2f36', roadLine: '#d8c95a',

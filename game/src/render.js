@@ -110,6 +110,13 @@ export function createRenderer(canvas) {
     context.fillStyle = pl.health > 40 ? PALETTE.green : PALETTE.red; context.fillRect(24, 112, 200 * Math.max(0, pl.health) / 100, 16);
     text(`Health ${Math.max(0, Math.round(pl.health))}`, 232, 110, 16, PALETTE.text, 'left');
     text(`Lives ${state.lives}`, 24, 136, 18, PALETTE.text, 'left');
+    // Stolen-car health, only while driving — a wrecked car strands Rico.
+    if (pl.inCar && pl.car) {
+      context.fillStyle = '#222'; context.fillRect(24, 160, 200, 12);
+      context.fillStyle = pl.car.health > 40 ? PALETTE.gold : PALETTE.red;
+      context.fillRect(24, 160, 200 * Math.max(0, pl.car.health) / 100, 12);
+      text(`Car ${Math.max(0, Math.round(pl.car.health))}`, 232, 158, 16, PALETTE.text, 'left');
+    }
     // Wanted stars.
     for (let i = 0; i < 5; i += 1) { context.fillStyle = i < state.wanted ? PALETTE.red : 'rgba(255,255,255,0.25)'; context.font = '28px ' + FONT; context.textAlign = 'left'; context.fillText('★', FIELD.width - 260 + i * 32, 18); }
     text(state.wanted > 0 ? 'WANTED' : 'Clean', FIELD.width - 260, 52, 16, state.wanted > 0 ? PALETTE.red : PALETTE.green, 'left');

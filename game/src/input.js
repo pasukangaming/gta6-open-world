@@ -38,6 +38,8 @@ export function createInput(canvas) {
     else if (RUN.has(event.code)) run = false;
   });
   window.addEventListener('blur', () => { up = down = left = right = run = shoot = false; });
+  // Leaving the canvas mid-click must not leave the trigger held down.
+  canvas.addEventListener('pointerleave', () => { shoot = false; mouseIn = false; });
   canvas.addEventListener('pointermove', (e) => { mouseX = e.clientX; mouseY = e.clientY; mouseIn = true; });
   canvas.addEventListener('pointerdown', (e) => {
     mouseX = e.clientX; mouseY = e.clientY; mouseIn = true;

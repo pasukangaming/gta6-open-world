@@ -24,6 +24,8 @@ export function createAudio() {
     coin() { tone(880, 0.12, 'sine', 0.08, 1320); },
     hit() { tone(160, 0.25, 'sawtooth', 0.1, 60); },
     siren() { tone(700, 0.4, 'sine', 0.05, 1100); },
+    horn() { tone(370, 0.18, 'square', 0.05, 370); tone(440, 0.18, 'square', 0.04, 440); },
+    ui() { tone(660, 0.06, 'sine', 0.05); },
     mission() { tone(523, 0.15, 'sine', 0.09); setTimeout(() => tone(659, 0.15, 'sine', 0.09), 140); setTimeout(() => tone(784, 0.3, 'sine', 0.09), 280); },
     steal() { tone(300, 0.2, 'square', 0.06, 600); },
   };
